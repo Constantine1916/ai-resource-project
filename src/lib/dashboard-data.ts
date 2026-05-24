@@ -11,6 +11,16 @@ export type DashboardData = {
   sources: Source[];
   articles: Array<Article & { source_name: string; source_slug: string }>;
   crawlRuns: Array<CrawlRun & { source_name: string | null }>;
+  deliveryLogs: Array<{
+    id: string;
+    status: "running" | "success" | "failed" | "skipped";
+    recipient_email: string | null;
+    article_count: number;
+    subject: string | null;
+    error_message: string | null;
+    started_at: string;
+    finished_at: string | null;
+  }>;
 };
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -20,12 +30,14 @@ export async function getDashboardData(): Promise<DashboardData> {
       sources: [],
       articles: [],
       crawlRuns: [],
+      deliveryLogs: [],
     };
   }
 
   const supabase = createSupabaseAdmin();
 
-  const [sourcesResult, articlesResult, runsResult] = await Promise.all([
+  const [sourcesResult, articlesResult, runsResult, deliveryLogsResult] =
+    await Promise.all([
     supabase.from("sources").select("*").order("name", { ascending: true }),
     supabase
       .from("articles")
@@ -36,6 +48,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     supabase
       .from("crawl_runs")
       .select("*")
+      .order("started_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("delivery_logs")
+      .select("id,status,recipient_email,article_count,subject,error_message,started_at,finished_at")
       .order("started_at", { ascending: false })
       .limit(10),
   ]);
@@ -50,6 +67,10 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   if (runsResult.error) {
     throw runsResult.error;
+  }
+
+  if (deliveryLogsResult.error) {
+    throw deliveryLogsResult.error;
   }
 
   const sources = (sourcesResult.data ?? []) as Source[];
@@ -75,5 +96,6 @@ export async function getDashboardData(): Promise<DashboardData> {
         source_name: source?.name ?? null,
       };
     }),
+    deliveryLogs: (deliveryLogsResult.data ?? []) as DashboardData["deliveryLogs"],
   };
 }

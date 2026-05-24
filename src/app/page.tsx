@@ -23,12 +23,17 @@ function statusLabel(status: string) {
     return "失败";
   }
 
+  if (status === "skipped") {
+    return "跳过";
+  }
+
   return "运行中";
 }
 
 export default async function Home() {
   const data = await getDashboardData();
   const latestRun = data.crawlRuns[0];
+  const latestDelivery = data.deliveryLogs[0];
   const successfulRuns = data.crawlRuns.filter(
     (run) => run.status === "success",
   ).length;
@@ -48,6 +53,13 @@ export default async function Home() {
       label: "最近抓取",
       value: latestRun ? statusLabel(latestRun.status) : "未运行",
       subtext: latestRun ? formatDate(latestRun.started_at) : "等待首次抓取",
+    },
+    {
+      label: "最近推送",
+      value: latestDelivery ? statusLabel(latestDelivery.status) : "未运行",
+      subtext: latestDelivery
+        ? `${latestDelivery.article_count} 条 · ${formatDate(latestDelivery.started_at)}`
+        : "等待邮件推送",
     },
   ];
 
@@ -74,7 +86,7 @@ export default async function Home() {
           </section>
         ) : null}
 
-        <section className="grid gap-3 md:grid-cols-3">
+        <section className="grid gap-3 md:grid-cols-4">
           {metrics.map((metric) => (
             <div
               key={metric.label}
@@ -117,6 +129,44 @@ export default async function Home() {
                     </p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-[#d8ddcf] bg-white shadow-sm">
+              <div className="border-b border-[#e4e8dd] px-5 py-4">
+                <h2 className="text-lg font-semibold">邮件推送日志</h2>
+              </div>
+              <div className="divide-y divide-[#edf0e8]">
+                {data.deliveryLogs.length === 0 ? (
+                  <p className="px-5 py-4 text-sm text-[#68715d]">
+                    暂无邮件推送记录。
+                  </p>
+                ) : (
+                  data.deliveryLogs.map((log) => (
+                    <div key={log.id} className="px-5 py-4 text-sm">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="font-medium">
+                          {log.subject ?? "AI 资讯日报"}
+                        </p>
+                        <span
+                          className={
+                            log.status === "failed"
+                              ? "text-[#9a3412]"
+                              : "text-[#2d5a23]"
+                          }
+                        >
+                          {statusLabel(log.status)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-[#68715d]">
+                        {formatDate(log.started_at)}，推送 {log.article_count} 条
+                      </p>
+                      {log.error_message ? (
+                        <p className="mt-2 text-[#9a3412]">{log.error_message}</p>
+                      ) : null}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

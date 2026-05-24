@@ -74,6 +74,13 @@ Hacker News uses HNRSS because it is a stable RSS wrapper for Hacker News front 
 - Auth: `Authorization: Bearer $CRON_SECRET`
 - Schedule: daily at `00:00 UTC`, which is `08:00` in Beijing time.
 
+## Email Digest Route
+
+- Route: `GET /api/cron/digest`
+- Auth: `Authorization: Bearer $CRON_SECRET`
+- Schedule: daily at `00:30 UTC`, which is `08:30` in Beijing time.
+- Delivery: SMTP, configured through Vercel Environment Variables.
+
 ## Environment
 
 Secrets should never be committed to Git.
