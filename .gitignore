@@ -16,6 +16,7 @@ coverage/
 # platform state
 .vercel/
 .supabase/
+supabase/.temp/
 
 # OS/editor files
 .DS_Store
