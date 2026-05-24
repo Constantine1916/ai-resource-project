@@ -1,5 +1,3 @@
-import nodemailer from "nodemailer";
-
 type EmailPayload = {
   to: string;
   subject: string;
@@ -7,9 +5,11 @@ type EmailPayload = {
   html: string;
 };
 
-function readBoolean(value: string | undefined) {
-  return value === "true" || value === "1";
-}
+type ResendEmailResponse = {
+  id?: string;
+  message?: string;
+  name?: string;
+};
 
 function requiredEnv(name: string) {
   const value = process.env[name];
@@ -25,44 +25,42 @@ export function getEmailRecipient() {
   return requiredEnv("DIGEST_TO_EMAIL");
 }
 
-export function hasSmtpConfig() {
-  return getMissingSmtpConfig().length === 0;
+export function hasEmailConfig() {
+  return getMissingEmailConfig().length === 0;
 }
 
-export function getMissingSmtpConfig() {
-  return [
-    "SMTP_HOST",
-    "SMTP_PORT",
-    "SMTP_USER",
-    "SMTP_PASSWORD",
-    "EMAIL_FROM",
-    "DIGEST_TO_EMAIL",
-  ].filter((name) => !process.env[name]);
+export function getMissingEmailConfig() {
+  return ["RESEND_API_KEY", "EMAIL_FROM", "DIGEST_TO_EMAIL"].filter(
+    (name) => !process.env[name],
+  );
 }
 
 export async function sendEmail(payload: EmailPayload) {
-  const host = requiredEnv("SMTP_HOST");
-  const port = Number(requiredEnv("SMTP_PORT"));
-  const secure = readBoolean(process.env.SMTP_SECURE);
-  const user = requiredEnv("SMTP_USER");
-  const pass = requiredEnv("SMTP_PASSWORD");
+  const apiKey = requiredEnv("RESEND_API_KEY");
   const from = requiredEnv("EMAIL_FROM");
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: {
-      user,
-      pass,
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+      html: payload.html,
+    }),
   });
 
-  return transporter.sendMail({
-    from,
-    to: payload.to,
-    subject: payload.subject,
-    text: payload.text,
-    html: payload.html,
-  });
+  const body = (await response.json().catch(() => ({}))) as ResendEmailResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      body.message || `Resend email request failed with ${response.status}.`,
+    );
+  }
+
+  return body;
 }

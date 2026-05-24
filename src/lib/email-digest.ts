@@ -1,8 +1,8 @@
 import { createSupabaseAdmin, type Article, type Source } from "@/lib/supabase-admin";
 import {
   getEmailRecipient,
-  getMissingSmtpConfig,
-  hasSmtpConfig,
+  getMissingEmailConfig,
+  hasEmailConfig,
   sendEmail,
 } from "@/lib/mailer";
 
@@ -262,10 +262,10 @@ export async function runEmailDigest(): Promise<EmailDigestResult> {
 
     const resolvedRecipientEmail = getEmailRecipient();
 
-    if (!hasSmtpConfig()) {
-      const missingConfig = getMissingSmtpConfig().join(", ");
+    if (!hasEmailConfig()) {
+      const missingConfig = getMissingEmailConfig().join(", ");
       throw new Error(
-        `SMTP is not fully configured. Missing: ${missingConfig}.`,
+        `Email delivery is not fully configured. Missing: ${missingConfig}.`,
       );
     }
 
