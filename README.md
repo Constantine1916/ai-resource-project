@@ -58,6 +58,22 @@ Vercel Cron
   -> Record delivery log
 ```
 
+## RSS Sources
+
+Initial RSS sources are inserted by Supabase migration:
+
+- 36Kr: `https://36kr.com/feed`
+- Hacker News: `https://hnrss.org/frontpage`
+- AIHOT: `https://aihot.virxact.com/feed/all.xml`
+
+Hacker News uses HNRSS because it is a stable RSS wrapper for Hacker News front page items.
+
+## Crawl Route
+
+- Route: `GET /api/cron/fetch`
+- Auth: `Authorization: Bearer $CRON_SECRET`
+- Schedule: daily at `00:00 UTC`, which is `08:00` in Beijing time.
+
 ## Environment
 
 Secrets should never be committed to Git.
