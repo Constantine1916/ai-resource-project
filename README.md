@@ -74,3 +74,9 @@ Never commit real API keys, database passwords, service role keys, tokens, webho
 - First source type: RSS.
 - First deployment target: Vercel.
 - First database target: a dedicated Supabase project.
+
+## CI/CD
+
+- GitHub Actions runs lint and production build on pushes and pull requests targeting `main`.
+- Vercel is connected to the GitHub repository and deploys the `main` branch automatically.
+- The project uses `pnpm` and Node.js `22.x` for local, CI, and Vercel builds.
